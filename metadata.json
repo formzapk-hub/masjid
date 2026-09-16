@@ -1,0 +1,8 @@
+{
+  "name": "MASJID JAMI' AT-TAQWA",
+  "description": "Aplikasi Waktu Sholat, Arah Kiblat, Jadwal Petugas, Inventaris, Laporan Keuangan, dan Dashboard Publik TV Masjid.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

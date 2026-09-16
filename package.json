@@ -1,0 +1,8 @@
+{
+  "name": "sajada",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'Build ok'",
+    "dev": "echo 'Dev ok'"
+  }
+}
