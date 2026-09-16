@@ -213,8 +213,10 @@ fun OfficerSection(viewModel: MainViewModel) {
                             onDelete = { viewModel.deleteSchedule(schedule) },
                             onSimulateWa = { selectedScheduleForWa = schedule },
                             onShare = {
-                                val isFriday = schedule.prayerTime.equals("Jum'at", ignoreCase = true)
-                                val bilalLine = if (isFriday && schedule.bilal.isNotEmpty()) "\nBilal: ${schedule.bilal}" else ""
+                                val isFridayOrEid = schedule.prayerTime.equals("Jum'at", ignoreCase = true) || 
+                                                    schedule.prayerTime.equals("Idul Fitri", ignoreCase = true) || 
+                                                    schedule.prayerTime.equals("Idul Adha", ignoreCase = true)
+                                val bilalLine = if (isFridayOrEid && schedule.bilal.isNotEmpty()) "\nBilal: ${schedule.bilal}" else ""
                                 val text = "JADWAL PETUGAS MASJID\nHari/Tgl: ${schedule.date}\nSholat: ${schedule.prayerTime}\nImam: ${schedule.imam}\nMuadzin: ${schedule.muadzin}$bilalLine\nPetugas Lain: ${schedule.otherOfficer}\n\nDisinkronkan otomatis oleh MASJID JAMI' AT-TAQWA App."
                                 viewModel.addSyncLog("Bagikan", "Membagikan jadwal ${schedule.prayerTime} via teks tim", "SUCCESS")
                                 Toast.makeText(context, "Jadwal disalin ke Clipboard!", Toast.LENGTH_SHORT).show()
@@ -269,7 +271,7 @@ fun OfficerSection(viewModel: MainViewModel) {
                             expanded = expandedPrayer,
                             onDismissRequest = { expandedPrayer = false }
                         ) {
-                            val options = listOf("Subuh", "Dzuhur", "Ashar", "Maghrib", "Isya", "Jum'at")
+                            val options = listOf("Subuh", "Dzuhur", "Ashar", "Maghrib", "Isya", "Jum'at", "Idul Fitri", "Idul Adha")
                             options.forEach { opt ->
                                 DropdownMenuItem(
                                     text = { Text(opt) },
@@ -285,7 +287,7 @@ fun OfficerSection(viewModel: MainViewModel) {
                     OutlinedTextField(
                         value = imamVal,
                         onValueChange = { imamVal = it },
-                        label = { Text(if (prayerVal == "Jum'at") "Nama Khatib / Imam" else "Nama Imam") },
+                        label = { Text(if (prayerVal == "Jum'at" || prayerVal == "Idul Fitri" || prayerVal == "Idul Adha") "Nama Khatib / Imam" else "Nama Imam") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -296,7 +298,7 @@ fun OfficerSection(viewModel: MainViewModel) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    if (prayerVal == "Jum'at") {
+                    if (prayerVal == "Jum'at" || prayerVal == "Idul Fitri" || prayerVal == "Idul Adha") {
                         OutlinedTextField(
                             value = bilalVal,
                             onValueChange = { bilalVal = it },
@@ -320,11 +322,11 @@ fun OfficerSection(viewModel: MainViewModel) {
                             Toast.makeText(context, "Silakan lengkapi nama Imam & Muadzin!", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
-                        if (prayerVal == "Jum'at" && bilalVal.isEmpty()) {
+                        if ((prayerVal == "Jum'at" || prayerVal == "Idul Fitri" || prayerVal == "Idul Adha") && bilalVal.isEmpty()) {
                             Toast.makeText(context, "Silakan lengkapi nama Bilal!", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
-                        viewModel.insertSchedule(dateVal, prayerVal, imamVal, muadzinVal, otherVal, if (prayerVal == "Jum'at") bilalVal else "")
+                        viewModel.insertSchedule(dateVal, prayerVal, imamVal, muadzinVal, otherVal, if (prayerVal == "Jum'at" || prayerVal == "Idul Fitri" || prayerVal == "Idul Adha") bilalVal else "")
                         showAddDialog = false
                     }
                 ) {
@@ -503,7 +505,9 @@ fun OfficerScheduleCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                val isFriday = schedule.prayerTime.equals("Jum'at", ignoreCase = true)
+                val isFridayOrEid = schedule.prayerTime.equals("Jum'at", ignoreCase = true) || 
+                                    schedule.prayerTime.equals("Idul Fitri", ignoreCase = true) || 
+                                    schedule.prayerTime.equals("Idul Adha", ignoreCase = true)
                 // Imam Col
                 Column(
                     modifier = Modifier
@@ -512,7 +516,7 @@ fun OfficerScheduleCard(
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
                         .padding(8.dp)
                 ) {
-                    Text(text = if (isFriday) "KHATIB" else "IMAM", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontWeight = FontWeight.Bold)
+                    Text(text = if (isFridayOrEid) "KHATIB" else "IMAM", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontWeight = FontWeight.Bold)
                     Text(text = schedule.imam, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 }
 
@@ -528,8 +532,8 @@ fun OfficerScheduleCard(
                     Text(text = schedule.muadzin, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 }
 
-                // Bilal Col (if Friday)
-                if (isFriday) {
+                // Bilal Col (if Friday or Eid)
+                if (isFridayOrEid) {
                     Column(
                         modifier = Modifier
                             .weight(1f)

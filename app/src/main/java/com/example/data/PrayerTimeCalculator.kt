@@ -127,7 +127,7 @@ object PrayerTimeCalculator {
         val tanDeltaLatDiff = abs(tan(latRad - declination))
         val asrAngleRad = atan(1.0 / (1.0 + tanDeltaLatDiff))
         val asrAngle = Math.toDegrees(asrAngleRad)
-        val hAsr = getHourAngle(-asrAngle) // Angle below horizon for Asr
+        val hAsr = getHourAngle(asrAngle) // Angle above horizon for Asr
 
         // 3. Format times as "HH:MM" (adding Indonesian ihtiyati / safety buffers of ~2-3 mins)
         fun formatTime(hourValue: Double, bufferMinutes: Int = 0): String {

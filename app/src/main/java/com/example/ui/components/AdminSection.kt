@@ -40,6 +40,7 @@ fun AdminSection(viewModel: MainViewModel) {
 
     var activeSubTab by remember { mutableStateOf("ASET") } // "ASET", "ROLE", "SYNC", "MFA"
     var showAddAssetDialog by remember { mutableStateOf(false) }
+    var editingAsset by remember { mutableStateOf<InventoryAsset?>(null) }
 
     // 2FA Lock states
     var is2faVerified by remember { mutableStateOf(!settings.mfaEnabled) }
@@ -115,7 +116,7 @@ fun AdminSection(viewModel: MainViewModel) {
             // Main Sub Tab panels
             Box(modifier = Modifier.weight(1f)) {
                 when (activeSubTab) {
-                    "ASET" -> AssetsSubSection(viewModel, assets, userRole) { showAddAssetDialog = true }
+                    "ASET" -> AssetsSubSection(viewModel, assets, userRole, onAddClick = { showAddAssetDialog = true }, onEditClick = { editingAsset = it })
                     "ROLE" -> RoleSubSection(viewModel, userRole)
                     "SYNC" -> SyncSubSection(viewModel, isOnline, syncing, syncLogs)
                     "MFA" -> MfaSetupSubSection(viewModel, settings)
@@ -214,6 +215,98 @@ fun AdminSection(viewModel: MainViewModel) {
             }
         )
     }
+
+    // Edit Asset Dialog Form
+    if (editingAsset != null) {
+        val asset = editingAsset!!
+        var nameVal by remember { mutableStateOf(asset.name) }
+        var qtyVal by remember { mutableStateOf(asset.quantity.toString()) }
+        var conditionVal by remember { mutableStateOf(asset.condition) }
+        var locVal by remember { mutableStateOf(asset.location) }
+
+        AlertDialog(
+            onDismissRequest = { editingAsset = null },
+            title = { Text(text = "Ubah Data Aset Fisik", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = nameVal,
+                        onValueChange = { nameVal = it },
+                        label = { Text("Nama Barang / Aset") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = qtyVal,
+                        onValueChange = { qtyVal = it },
+                        label = { Text("Jumlah (Unit)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Condition Dropdown
+                    var expandedCond by remember { mutableStateOf(false) }
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = conditionVal,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Kondisi Fisik") },
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { expandedCond = true }) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Drop")
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = expandedCond,
+                            onDismissRequest = { expandedCond = false }
+                        ) {
+                            listOf("Baik", "Rusak Ringan", "Rusak Berat").forEach { opt ->
+                                DropdownMenuItem(
+                                    text = { Text(opt) },
+                                    onClick = {
+                                        conditionVal = opt
+                                        expandedCond = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = locVal,
+                        onValueChange = { locVal = it },
+                        label = { Text("Lokasi Penyimpanan") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val qtyParsed = qtyVal.toIntOrNull()
+                        if (nameVal.isEmpty() || qtyParsed == null || qtyParsed <= 0) {
+                            Toast.makeText(context, "Silakan masukkan data aset yang valid!", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        viewModel.updateAsset(asset.id, nameVal, qtyParsed, conditionVal, locVal)
+                        editingAsset = null
+                    }
+                ) {
+                    Text("Simpan Perubahan")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingAsset = null }) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -221,7 +314,8 @@ fun AssetsSubSection(
     viewModel: MainViewModel,
     assets: List<InventoryAsset>,
     userRole: String,
-    onAddClick: () -> Unit
+    onAddClick: () -> Unit,
+    onEditClick: (InventoryAsset) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -311,6 +405,12 @@ fun AssetsSubSection(
                                 }
                                 
                                 if (userRole == "ADMIN" || userRole == "PENGURUS") {
+                                    IconButton(
+                                        onClick = { onEditClick(item) },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                    }
                                     Spacer(modifier = Modifier.width(6.dp))
                                     IconButton(
                                         onClick = { viewModel.deleteAsset(item) },

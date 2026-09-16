@@ -251,6 +251,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateAsset(id: Int, name: String, quantity: Int, condition: String, location: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val asset = InventoryAsset(
+                id = id,
+                name = name,
+                quantity = quantity,
+                condition = condition,
+                location = location,
+                pendingSync = !isOnline.value
+            )
+            dao.insertAsset(asset)
+            addSyncLog("Inventaris", "Memperbarui aset fisik $name ($quantity unit)", if (isOnline.value) "SUCCESS" else "PENDING")
+        }
+    }
+
     fun deleteAsset(asset: InventoryAsset) {
         viewModelScope.launch(Dispatchers.IO) {
             dao.deleteAsset(asset)
